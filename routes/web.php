@@ -17,6 +17,7 @@ use App\Http\Controllers\EnrollmentManagementController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\LearningHourTargetController;
 use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\MeetingPackController;
 use App\Http\Controllers\MeetingQuotaHistoryController;
 use App\Http\Controllers\MockExamAnswerController;
 use App\Http\Controllers\MockExamCatalogController;
@@ -543,4 +544,33 @@ Route::middleware(['auth', 'role:admin'])
             ->name('destroy');
         Route::delete('{thread}/replies/{reply}', [QaBoardModerationController::class, 'replyDestroy'])
             ->name('replies.destroy');
+    });
+
+// ============================================================
+// 管理者専用 — 面談パック
+// ============================================================
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin/meeting-packs')
+    ->name('admin.meeting-packs.')
+    ->group(function () {
+        Route::get('/', [MeetingPackController::class, 'index'])
+            ->name('index');
+        Route::get('create', [MeetingPackController::class, 'create'])
+            ->name('create');
+        Route::post('/', [MeetingPackController::class, 'store'])
+            ->name('store');
+        Route::get('{plan}', [MeetingPackController::class, 'show'])
+            ->name('show');
+        Route::get('{plan}/edit', [MeetingPackController::class, 'edit'])
+            ->name('edit');
+        Route::patch('{plan}', [MeetingPackController::class, 'update'])
+            ->name('update');
+        Route::delete('{plan}', [MeetingPackController::class, 'destroy'])
+            ->name('destroy');
+        Route::post('{plan}/publish', [MeetingPackController::class, 'publish'])
+            ->name('publish');
+        Route::post('{plan}/archive', [MeetingPackController::class, 'archive'])
+            ->name('archive');
+        Route::post('{plan}/unarchive', [MeetingPackController::class, 'unarchive'])
+            ->name('unarchive');
     });
