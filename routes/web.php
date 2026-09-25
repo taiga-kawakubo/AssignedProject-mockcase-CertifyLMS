@@ -26,6 +26,7 @@ use App\Http\Controllers\MockExamQuestionController;
 use App\Http\Controllers\MockExamSessionController;
 use App\Http\Controllers\MockExamSessionMonitorController;
 use App\Http\Controllers\PartController;
+use App\Http\Controllers\PlanController;
 use App\Http\Controllers\QaBoardModerationController;
 use App\Http\Controllers\QaReplyController;
 use App\Http\Controllers\QaThreadController;
@@ -572,5 +573,34 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('{plan}/archive', [MeetingPackController::class, 'archive'])
             ->name('archive');
         Route::post('{plan}/unarchive', [MeetingPackController::class, 'unarchive'])
+            ->name('unarchive');
+    });
+
+// ============================================================
+// 管理者専用 — 受講プラン
+// ============================================================
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin/plans')
+    ->name('admin.plans.')
+    ->group(function () {
+        Route::get('/', [PlanController::class, 'index'])
+            ->name('index');
+        Route::get('create', [PlanController::class, 'create'])
+            ->name('create');
+        Route::post('/', [PlanController::class, 'store'])
+            ->name('store');
+        Route::get('{plan}', [PlanController::class, 'show'])
+            ->name('show');
+        Route::get('{plan}/edit', [PlanController::class, 'edit'])
+            ->name('edit');
+        Route::put('{plan}', [PlanController::class, 'update'])
+            ->name('update');
+        Route::delete('{plan}', [PlanController::class, 'destroy'])
+            ->name('destroy');
+        Route::post('{plan}/publish', [PlanController::class, 'publish'])
+            ->name('publish');
+        Route::post('{plan}/archive', [PlanController::class, 'archive'])
+            ->name('archive');
+        Route::post('{plan}/unarchive', [PlanController::class, 'unarchive'])
             ->name('unarchive');
     });
