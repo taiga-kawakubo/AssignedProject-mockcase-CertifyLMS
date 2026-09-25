@@ -18,6 +18,8 @@ use App\Models\MockExam;
 use App\Models\MockExamQuestion;
 use App\Models\MockExamSession;
 use App\Models\Part;
+use App\Models\QaReply;
+use App\Models\QaThread;
 use App\Models\QuestionCategory;
 use App\Models\Section;
 use App\Models\SectionImage;
@@ -43,6 +45,8 @@ use App\Policies\MockExamQuestionPolicy;
 use App\Policies\MockExamSessionPolicy;
 use App\Policies\PartPolicy;
 use App\Policies\PartViewPolicy;
+use App\Policies\QaReplyPolicy;
+use App\Policies\QaThreadPolicy;
 use App\Policies\QuestionCategoryPolicy;
 use App\Policies\SectionImagePolicy;
 use App\Policies\SectionPolicy;
@@ -75,6 +79,8 @@ class AuthServiceProvider extends ServiceProvider
         Section::class => SectionPolicy::class,
         SectionImage::class => SectionImagePolicy::class,
         SectionQuestion::class => SectionQuestionPolicy::class,
+        QaReply::class => QaReplyPolicy::class,
+        QaThread::class => QaThreadPolicy::class,
         QuestionCategory::class => QuestionCategoryPolicy::class,
         MockExam::class => MockExamPolicy::class,
         MockExamQuestion::class => MockExamQuestionPolicy::class,
