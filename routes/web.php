@@ -25,6 +25,7 @@ use App\Http\Controllers\MockExamController;
 use App\Http\Controllers\MockExamQuestionController;
 use App\Http\Controllers\MockExamSessionController;
 use App\Http\Controllers\MockExamSessionMonitorController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PartController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\QaBoardModerationController;
@@ -603,4 +604,19 @@ Route::middleware(['auth', 'role:admin'])
             ->name('archive');
         Route::post('{plan}/unarchive', [PlanController::class, 'unarchive'])
             ->name('unarchive');
+    });
+
+// ============================================================
+// 通知機能の実装 — チャット、質問掲示板への回答の通知
+// ============================================================
+Route::middleware('auth')
+    ->prefix('notifications')
+    ->name('notifications.')
+    ->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])
+            ->name('index');
+        Route::post('read-all', [NotificationController::class, 'markAllAsRead'])
+            ->name('markAllAsRead');
+        Route::post('{notification}/read', [NotificationController::class, 'markAsRead'])
+            ->name('markAsRead');
     });

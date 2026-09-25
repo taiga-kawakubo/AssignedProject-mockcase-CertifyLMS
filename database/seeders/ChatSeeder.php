@@ -21,8 +21,8 @@ use Illuminate\Database\Seeder;
  *    初期状態を一括で作る。受講生本人 + 当該資格の担当コーチ集合を ChatMember として登録。
  *
  * 2. **固定 student の最初の Enrollment にサンプル会話を投入**: 受講生 / コーチ画面で UI バッジ / 既読 / 並び順を
- *    安定して確認できるよう、コーチ → 受講生 → コーチ の往復メッセージを 4〜6 件 + 受講生未読が残るよう
- *    最後はコーチ発言で終える。
+ *    安定して確認できるよう、コーチ → 受講生 → コーチ の往復メッセージを 4〜6 件
+ *    最後は受講生の発言で終える。
  *
  * 3. **demo データの一部に未読を残す**: 一覧の未読バッジ表示 / 「未読あり」フィルタ動作の即時確認用。
  *
@@ -99,7 +99,16 @@ final class ChatSeeder extends Seeder
             ['user' => $student, 'body' => 'おはようございます。来週の mock-exam に向けて、アルゴリズム分野の進め方を相談させてください。', 'minutes_ago' => 180],
             ['user' => $coach, 'body' => 'おはようございます。直近の演習結果を見ると 2 分探索木の比較回数が苦手そうですね。まず章末の例題から潰しましょう。', 'minutes_ago' => 170],
             ['user' => $student, 'body' => 'ありがとうございます。例題を解いてから過去問に進む流れで進めてみます。', 'minutes_ago' => 90],
+            ['user' => $student, 'body' => '例題を1問解きました。考え方は理解できました。', 'minutes_ago' => 80],
+            ['user' => $student, 'body' => '2問目では探索順序を間違えたので復習します。', 'minutes_ago' => 70],
+            ['user' => $student, 'body' => '間違えた問題をもう一度解き直しました。', 'minutes_ago' => 60],
+            ['user' => $student, 'body' => '二分探索木の比較回数を整理しています。', 'minutes_ago' => 50],
+            ['user' => $student, 'body' => '例題の解答手順をノートにまとめました。', 'minutes_ago' => 40],
+            ['user' => $student, 'body' => '過去問にも同じ考え方を使えそうです。', 'minutes_ago' => 30],
+            ['user' => $student, 'body' => '苦手だった選択肢の理由を確認しました。', 'minutes_ago' => 20],
+            ['user' => $student, 'body' => '今日の学習内容について確認をお願いします。', 'minutes_ago' => 10],
             ['user' => $coach, 'body' => '良い順番です。詰まったら理解できなかった選択肢を共有してください。一緒に解説します。', 'minutes_ago' => 5],
+            ['user' => $student, 'body' => 'ありがとうございます。まず例題から進めてみます。', 'minutes_ago' => 1],
         ];
 
         foreach ($script as $line) {
@@ -117,6 +126,11 @@ final class ChatSeeder extends Seeder
             ->where('chat_room_id', $room->id)
             ->where('user_id', $coach->id)
             ->update(['last_read_at' => Carbon::now()->subMinutes(5)]);
+
+        ChatMember::query()
+            ->where('chat_room_id', $room->id)
+            ->where('user_id', $student->id)
+            ->update(['last_read_at' => Carbon::now()]);
     }
 
     /**
