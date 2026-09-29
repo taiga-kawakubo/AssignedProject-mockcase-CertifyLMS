@@ -1,0 +1,58 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Policies;
+
+use App\Enums\EnrollmentStatus;
+use App\Enums\UserRole;
+use App\Enums\UserStatus;
+use App\Models\Enrollment;
+use App\Models\EnrollmentGoal;
+use App\Models\User;
+
+class EnrollmentGoalPolicy
+{
+    public function create(User $user, Enrollment $enrollment): bool
+    {
+        return $this->canManageEnrollment($user, $enrollment);
+    }
+
+    public function update(User $user, EnrollmentGoal $goal): bool
+    {
+        return $this->canManageGoal($user, $goal);
+    }
+
+    public function delete(User $user, EnrollmentGoal $goal): bool
+    {
+        return $this->canManageGoal($user, $goal);
+    }
+
+    public function markAchieved(User $user, EnrollmentGoal $goal): bool
+    {
+        return $goal->achieved_at === null
+            && $this->canManageGoal($user, $goal);
+    }
+
+    public function unmarkAchieved(User $user, EnrollmentGoal $goal): bool
+    {
+        return $goal->achieved_at !== null
+            && $this->canManageGoal($user, $goal);
+    }
+
+    private function canManageGoal(User $user, EnrollmentGoal $goal): bool
+    {
+        $goal->loadMissing('enrollment');
+
+        return $goal->enrollment !== null
+            && $this->canManageEnrollment($user, $goal->enrollment);
+    }
+
+    private function canManageEnrollment(User $user, Enrollment $enrollment): bool
+    {
+        return $user->role === UserRole::Student
+            && $user->status === UserStatus::InProgress
+            && $enrollment->user_id === $user->id
+            && $enrollment->status === EnrollmentStatus::Learning;
+    }
+}
