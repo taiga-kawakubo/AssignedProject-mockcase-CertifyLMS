@@ -8,6 +8,8 @@ use App\Enums\UserStatus;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 
 /**
  * 開発用シードユーザー。
@@ -45,6 +47,22 @@ class UserSeeder extends Seeder
     {
         $defaultPassword = Hash::make('password');
         $now = now();
+
+        $sourcePath = database_path('seeders/assets/demo-student-avatar.jpg');
+        $avatarPath = 'avatars/demo-student-avatar.jpg';
+
+        if (! is_file($sourcePath)) {
+            throw new RuntimeException("アバター画像が見つかりません: {$sourcePath}");
+        }
+
+        $imageContents = file_get_contents($sourcePath);
+
+        if ($imageContents === false) {
+            throw new RuntimeException("アバター画像を読み込めません: {$sourcePath}");
+        }
+
+        Storage::disk('public')->put($avatarPath, $imageContents);
+        $avatarUrl = Storage::disk('public')->url($avatarPath);
 
         User::factory()
             ->admin()
@@ -96,6 +114,7 @@ class UserSeeder extends Seeder
                 'bio' => '基本情報を 3 ヶ月で合格目標。',
                 'profile_setup_completed' => true,
                 'email_verified_at' => $now,
+                'avatar_url' => $avatarUrl,
             ])
             ->create();
 
