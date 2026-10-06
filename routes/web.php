@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AnnouncementManagementController;
 use App\Http\Controllers\Auth\OnboardingController;
 use App\Http\Controllers\BrowseController;
 use App\Http\Controllers\CertificationCatalogController;
@@ -84,7 +85,7 @@ Route::middleware('auth')->group(function () {
     Route::get('enrollments/{enrollment}', [EnrollmentController::class, 'show'])
         ->withTrashed()
         ->name('enrollments.show');
-    
+
     //設定
     Route::get('/settings/profile',[ProfileController::class, 'index'])
         ->name('settings.profile.index');
@@ -652,6 +653,23 @@ Route::middleware(['auth', 'role:admin'])
     });
 
 // ============================================================
+// 管理者専用 — お知らせ配信
+// ============================================================
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin/announcements')
+    ->name('admin.announcements.')
+    ->group(function () {
+        Route::get('/', [AnnouncementManagementController::class, 'index'])
+            ->name('index');
+        Route::get('create', [AnnouncementManagementController::class, 'create'])
+            ->name('create');
+        Route::post('/', [AnnouncementManagementController::class, 'store'])
+            ->name('store');
+        Route::get('{announcement}', [AnnouncementManagementController::class, 'show'])
+            ->name('show');
+    });
+
+// ============================================================
 // 通知機能の実装 — チャット、質問掲示板への回答の通知
 // ============================================================
 Route::middleware('auth')
@@ -664,4 +682,6 @@ Route::middleware('auth')
             ->name('markAllAsRead');
         Route::post('{notification}/read', [NotificationController::class, 'markAsRead'])
             ->name('markAsRead');
+        Route::get('{notification}', [NotificationController::class, 'show'])
+            ->name('show');
     });
