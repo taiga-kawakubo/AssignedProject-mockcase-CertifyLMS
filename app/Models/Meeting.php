@@ -40,6 +40,14 @@ class Meeting extends Model
         'meeting_url_snapshot',
         'completed_at',
         'meeting_quota_transaction_id',
+        'eve_student_database_notified_at',
+        'eve_student_email_notified_at',
+        'eve_coach_database_notified_at',
+        'eve_coach_email_notified_at',
+        'one_hour_before_student_database_notified_at',
+        'one_hour_before_student_email_notified_at',
+        'one_hour_before_coach_database_notified_at',
+        'one_hour_before_coach_email_notified_at',
     ];
 
     protected $casts = [
@@ -47,6 +55,14 @@ class Meeting extends Model
         'scheduled_at' => 'datetime',
         'canceled_at' => 'datetime',
         'completed_at' => 'datetime',
+        'eve_student_database_notified_at' => 'datetime',
+        'eve_student_email_notified_at' => 'datetime',
+        'eve_coach_database_notified_at' => 'datetime',
+        'eve_coach_email_notified_at' => 'datetime',
+        'one_hour_before_student_database_notified_at' => 'datetime',
+        'one_hour_before_student_email_notified_at' => 'datetime',
+        'one_hour_before_coach_database_notified_at' => 'datetime',
+        'one_hour_before_coach_email_notified_at' => 'datetime',
     ];
 
     /**

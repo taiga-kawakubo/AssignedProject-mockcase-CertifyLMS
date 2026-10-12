@@ -36,6 +36,15 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('meeting_quota_transactions')
                 ->nullOnDelete();
+            $table->dateTime('eve_student_database_notified_at')->nullable()->default(null);
+            $table->dateTime('eve_student_email_notified_at')->nullable()->default(null);
+            $table->dateTime('eve_coach_database_notified_at')->nullable()->default(null);
+            $table->dateTime('eve_coach_email_notified_at')->nullable()->default(null);
+            $table->dateTime('one_hour_before_student_database_notified_at')->nullable()->default(null);
+            $table->dateTime('one_hour_before_student_email_notified_at')->nullable()->default(null);
+            $table->dateTime('one_hour_before_coach_database_notified_at')->nullable()->default(null);
+            $table->dateTime('one_hour_before_coach_email_notified_at')->nullable()->default(null);
+
             $table->timestamps();
 
             // 受講生別履歴一覧 / 自動完了 Schedule Command 高速化のための補助 INDEX

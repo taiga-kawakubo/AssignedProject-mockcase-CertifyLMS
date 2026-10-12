@@ -26,7 +26,7 @@ use Illuminate\Database\Seeder;
  *   デモコーチ全員に最低 1 件の枠を入れて自動コーチ割当の動作確認をしやすくする。
  * - **Meeting 状態網羅**: 履歴 UI の各ステータスバッジ・フィルタ・状態遷移ボタンが見える状態を作る。
  *   reserved(今後数日) / completed(過去、メモあり) / canceled(refund 流れ済) の 3 状態を散らす。
- * - **固定 student に最低 1 件ずつ**: 動作確認・スクショ撮影で安定して参照できるよう reserved × 1 / completed × 1 を確実に作る。
+ * - **固定 student に最低 1 件ずつ**: reserved / completed / canceled を作り、面談履歴と通知の遷移を確認できるようにする。
  *
  * 依存: UserSeeder → CertificationSeeder → EnrollmentSeeder の後に走る前提
  * (`certification_coach_assignments` と `enrollments` を参照する)。
@@ -93,7 +93,7 @@ final class MentoringSeeder extends Seeder
     }
 
     /**
-     * 固定 student に reserved × 1 + completed × 1 を最低限投入し、UI 動作確認の起点を用意する。
+     * 固定 student に reserved / completed / canceled を1件ずつ投入する。
      */
     private function seedFixedStudentMeetings(): void
     {
@@ -127,6 +127,26 @@ final class MentoringSeeder extends Seeder
             ]);
 
         $this->insertConsumedTransaction($student, $reserved);
+
+        // コーチがキャンセルした面談。受講生向けのキャンセル通知から詳細を確認できる。
+        $canceledAt = now()->subMinutes(5);
+        $createdAt = now()->subHour();
+        $canceled = Meeting::factory()
+            ->canceled()
+            ->forCoach($coach)
+            ->forStudent($student)
+            ->forEnrollment($enrollment)
+            ->create([
+                'scheduled_at' => $this->nextWeekdayAt(targetDow: 3, hour: 20),
+                'topic' => '次回の学習計画について相談したいです。',
+                'canceled_by_user_id' => $coach->id,
+                'canceled_at' => $canceledAt,
+                'created_at' => $createdAt,
+                'updated_at' => $canceledAt,
+            ]);
+
+        $this->insertConsumedTransaction($student, $canceled, occurredAt: $createdAt);
+        $this->insertRefundedTransaction($student, $canceled);
 
         // 過去の completed(2 週間前の月曜 19:00)+ コーチメモ
         $past = $this->lastWeekdayAt(targetDow: 1, hour: 19, weeksAgo: 2);
