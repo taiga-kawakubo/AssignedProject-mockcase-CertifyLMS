@@ -1,14 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use App\Models\Enrollment;
-use App\Models\EnrollmentNote;
 use App\Http\Requests\EnrollmentNote\StoreRequest;
 use App\Http\Requests\EnrollmentNote\UpdateRequest;
+use App\Models\Enrollment;
+use App\Models\EnrollmentNote;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
-
 
 class EnrollmentNoteController extends Controller
 {

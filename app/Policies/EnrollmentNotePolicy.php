@@ -1,12 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
+use App\Enums\UserRole;
 use App\Models\Enrollment;
 use App\Models\EnrollmentNote;
 use App\Models\User;
-use App\Enums\UserRole;
-
 
 class EnrollmentNotePolicy
 {
@@ -14,7 +15,6 @@ class EnrollmentNotePolicy
     {
         return in_array($user->role, [UserRole::Admin, UserRole::Coach], true);
     }
-
 
     public function create(User $user, Enrollment $enrollment): bool
     {
