@@ -38,6 +38,7 @@ class ChatUnreadCountService
 
         return ChatMessage::query()
             ->where('chat_room_id', $room->id)
+            ->where('sender_user_id', '!=', $user->id)
             ->when($member->last_read_at !== null, function ($q) use ($member): void {
                 $q->where('created_at', '>', $member->last_read_at);
             })
@@ -74,6 +75,7 @@ class ChatUnreadCountService
 
         $counts = ChatMessage::query()
             ->whereIn('chat_room_id', $members->pluck('chat_room_id')->all())
+            ->where('sender_user_id', '!=', $user->id)
             ->where(function ($q) use ($members): void {
                 foreach ($members as $member) {
                     $q->orWhere(function ($inner) use ($member): void {
@@ -110,6 +112,7 @@ class ChatUnreadCountService
             ->whereExists(function ($q) use ($user): void {
                 $q->select(DB::raw(1))
                     ->from('chat_messages')
+                    ->where('sender_user_id', '!=', $user->id)
                     ->whereColumn('chat_messages.chat_room_id', 'chat_rooms.id')
                     ->where(function ($inner) use ($user): void {
                         $inner->whereRaw(
