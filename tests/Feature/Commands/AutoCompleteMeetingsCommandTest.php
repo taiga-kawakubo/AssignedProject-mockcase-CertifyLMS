@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Commands;
 
 use App\Enums\MeetingStatus;
+use App\Models\Enrollment;
 use App\Models\Meeting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,6 +14,43 @@ use Tests\TestCase;
 class AutoCompleteMeetingsCommandTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_all_overdue_meetings_are_completed_across_chunks(): void
+    {
+        $coach = User::factory()->coach()->inProgress()->create();
+        $student = User::factory()->student()->inProgress()->create();
+        $enrollment = Enrollment::factory()
+            ->for($student, 'user')
+            ->learning()
+            ->create();
+
+        $base = now()->startOfHour();
+        $meetingIds = [];
+
+        for ($i = 0; $i < 120; $i++) {
+            $meeting = Meeting::factory()
+                ->reserved()
+                ->forCoach($coach)
+                ->forEnrollment($enrollment)
+                ->create([
+                    // 終了時刻を過ぎた面談を、予約時刻が重複しないように作成する。
+                    'scheduled_at' => $base->copy()->subHours($i + 2),
+                ]);
+
+            $meetingIds[] = $meeting->id;
+        }
+
+        $this->artisan('meetings:auto-complete')
+            ->expectsOutputToContain('自動完了した面談を 120 件処理しました。')
+            ->assertExitCode(0);
+
+        $completedCount = Meeting::query()
+            ->whereIn('id', $meetingIds)
+            ->where('status', MeetingStatus::Completed->value)
+            ->count();
+
+        $this->assertSame(120, $completedCount);
+    }
 
     public function test_command_transitions_overdue_reserved_meetings(): void
     {
