@@ -56,25 +56,30 @@ class SendMeetingRemindersCommand extends Command
 
     private function sendStudentMailReminder(Meeting $meeting, string $window, $columns): void
     {
-        $meeting->refresh();
+        DB::transaction(function () use ($meeting, $window, $columns): void {
+            $lockedMeeting = Meeting::query()
+                ->whereKey($meeting->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $studentMailColumn = $columns['student_mail'];
+            $studentMailColumn = $columns['student_mail'];
 
-        if ($meeting->status !== MeetingStatus::Reserved) {
-            return;
-        }
+            if ($lockedMeeting->status !== MeetingStatus::Reserved) {
+                return;
+            }
 
-        if ($meeting->student?->status === UserStatus::InProgress &&
-            $meeting->{$studentMailColumn} === null) {
+            if ($lockedMeeting->student?->status === UserStatus::InProgress &&
+                $lockedMeeting->{$studentMailColumn} === null) {
 
-            $meeting->student->notify(
-                new MeetingReminderNotification($meeting, $window, 'mail')
-            );
+                $lockedMeeting->student->notify(
+                    new MeetingReminderNotification($lockedMeeting, $window, 'mail')
+                );
 
-            $meeting->update([
-                $studentMailColumn => now(),
-            ]);
-        }
+                $lockedMeeting->update([
+                    $studentMailColumn => now(),
+                ]);
+            }
+        });
     }
 
     private function sendCoachDatabaseReminder(Meeting $meeting, string $window, $columns): void
@@ -108,25 +113,31 @@ class SendMeetingRemindersCommand extends Command
 
     private function sendCoachMailReminder(Meeting $meeting, string $window, $columns): void
     {
-        $meeting->refresh();
-        $coachMailColumn = $columns['coach_mail'];
+        DB::transaction(function () use ($meeting, $window, $columns): void {
+            $lockedMeeting = Meeting::query()
+                ->whereKey($meeting->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if ($meeting->status !== MeetingStatus::Reserved) {
-            return;
-        }
+            $coachMailColumn = $columns['coach_mail'];
 
-        if ($meeting->coach?->status === UserStatus::InProgress &&
-            $meeting->student?->status === UserStatus::InProgress &&
-            $meeting->{$coachMailColumn} === null) {
+            if ($lockedMeeting->status !== MeetingStatus::Reserved) {
+                return;
+            }
 
-            $meeting->coach->notify(
-                new MeetingReminderNotification($meeting, $window, 'mail')
-            );
+            if ($lockedMeeting->coach?->status === UserStatus::InProgress &&
+                $lockedMeeting->student?->status === UserStatus::InProgress &&
+                $lockedMeeting->{$coachMailColumn} === null) {
 
-            $meeting->update([
-                $coachMailColumn => now(),
-            ]);
-        }
+                $lockedMeeting->coach->notify(
+                    new MeetingReminderNotification($lockedMeeting, $window, 'mail')
+                );
+
+                $lockedMeeting->update([
+                    $coachMailColumn => now(),
+                ]);
+            }
+        });
     }
 
     /**
