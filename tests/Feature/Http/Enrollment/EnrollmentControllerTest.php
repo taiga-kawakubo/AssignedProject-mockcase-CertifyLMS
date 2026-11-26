@@ -186,6 +186,28 @@ class EnrollmentControllerTest extends TestCase
         $this->assertSoftDeleted('enrollments', ['id' => $enrollment->id]);
     }
 
+    public function test_destroy_physically_deletes_goals_belonging_to_enrollment(): void
+    {
+        // Arrange
+        $student = User::factory()->student()->inProgress()->create();
+        $enrollment = Enrollment::factory()->for($student)->learning()->create();
+        $goal = $enrollment->goals()->create([
+            'title' => '受講解除時に削除される目標',
+            'description' => '受講登録に紐づく個人目標です。',
+            'target_date' => now()->addMonth()->toDateString(),
+            'achieved_at' => null,
+        ]);
+
+        // Act
+        $response = $this->actingAs($student)
+            ->delete(route('enrollments.destroy', $enrollment));
+
+        // Assert
+        $response->assertRedirect(route('enrollments.index'));
+        $this->assertSoftDeleted('enrollments', ['id' => $enrollment->id]);
+        $this->assertDatabaseMissing('enrollment_goals', ['id' => $goal->id]);
+    }
+
     public function test_destroy_rejects_other_student(): void
     {
         $student = User::factory()->student()->inProgress()->create();

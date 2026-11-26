@@ -127,7 +127,7 @@ final class EnrollmentSeeder extends Seeder
      */
     private function enrollFixedStudent(User $student, $publishedCerts, ?User $admin): void
     {
-        $targets = $publishedCerts->take(4);
+        $targets = $publishedCerts->take(4)->values();
 
         foreach ($targets as $index => $certification) {
             $enrollment = Enrollment::firstOrCreate(
@@ -152,6 +152,35 @@ final class EnrollmentSeeder extends Seeder
                     'changed_reason' => '新規登録',
                 ],
             );
+
+            if ($index === 0) {
+                $enrollment->goals()->firstOrCreate(
+                    [
+                        'title' => '未達成の目標',
+                    ],
+                    [
+                        'description' => 'これから達成する目標。',
+                        'target_date' => now()
+                            ->addMonth()
+                            ->toDateString(),
+                        'achieved_at' => null,
+                    ]
+                );
+
+                $enrollment->goals()->firstOrCreate(
+                    [
+                        'title' => '達成した目標',
+                    ],
+                    [
+                        'description' => '目標期日が経過して達成した目標。',
+                        'target_date' => now()
+                            ->subMonth()
+                            ->toDateString(),
+                        'achieved_at' => now()
+                            ->subDays(10),
+                    ]
+                );
+            }
         }
     }
 
@@ -204,6 +233,21 @@ final class EnrollmentSeeder extends Seeder
 
             if ($pattern['state'] === 'passed') {
                 $this->issueCertificate($enrollment, $passedAt);
+            }
+
+            if ($pattern['state'] === 'learning') {
+                $isAchieved = $i % 2 === 1;
+
+                $enrollment->goals()->create([
+                    'title' => 'デモ受講生'.($i + 1).'の学習目標',
+                    'description' => '資格学習を計画どおり進めるための目標です。',
+                    'target_date' => $isAchieved
+                        ? now()->subDays(10)->toDateString()
+                        : now()->addDays(30)->toDateString(),
+                    'achieved_at' => $isAchieved
+                        ? now()->subDays(5)
+                        : null,
+                ]);
             }
         }
     }
