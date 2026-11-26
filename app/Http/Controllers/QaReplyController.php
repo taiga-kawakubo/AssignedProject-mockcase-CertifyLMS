@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserStatus;
 use App\Http\Requests\QaReply\StoreRequest;
 use App\Http\Requests\QaReply\UpdateRequest;
 use App\Models\QaReply;
 use App\Models\QaThread;
+use App\Notifications\Auth\QaReplyReceivedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -24,6 +26,17 @@ class QaReplyController extends Controller
             'qa_thread_id' => $thread->id,
             'body' => $validated['body'],
         ]);
+
+        $recipient = $thread->user;
+
+        if (
+            $recipient->status === UserStatus::InProgress
+            && ! $recipient->is($request->user())
+        ) {
+            $recipient->notify(
+                new QaReplyReceivedNotification($thread)
+            );
+        }
 
         return redirect()
             ->route('qa-board.show', $thread)

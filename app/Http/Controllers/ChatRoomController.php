@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\CertificationStatus;
 use App\Enums\UserRole;
+use App\Enums\UserStatus;
 use App\Exceptions\Chat\CertificationCoachNotAssignedForChatException;
 use App\Http\Requests\Chat\IndexAsCoachRequest;
 use App\Http\Requests\Chat\IndexRequest;
 use App\Http\Requests\Chat\StoreMessageRequest;
 use App\Models\ChatRoom;
+use App\Notifications\Auth\ChatMessageReceivedNotification;
 use App\Services\ChatUnreadCountService;
 use App\UseCases\Chat\ShowAction;
 use App\UseCases\Chat\StoreMessageAction;
 use Illuminate\Contracts\Support\Renderable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -145,7 +149,38 @@ class ChatRoomController extends Controller
             throw new CertificationCoachNotAssignedForChatException;
         }
 
-        $action($user, $room, $request->validated());
+        $message = $action(
+            $user,
+            $room,
+            $request->validated()
+        );
+
+        $recipientRole = match ($user->role) {
+            UserRole::Student => UserRole::Coach,
+            UserRole::Coach => UserRole::Student,
+            default => null,
+        };
+
+        if (
+            $recipientRole !== null
+            && $room->enrollment->certification->status === CertificationStatus::Published
+        ) {
+            $recipientMembers = $room->members()
+                ->where('user_id', '!=', $user->id)
+                ->whereHas('user', function (Builder $query) use ($recipientRole): void {
+                    $query
+                        ->where('role', $recipientRole->value)
+                        ->where('status', UserStatus::InProgress->value);
+                })
+                ->with('user')
+                ->get();
+
+            foreach ($recipientMembers as $recipientMember) {
+                $recipientMember->user->notify(
+                    new ChatMessageReceivedNotification($message)
+                );
+            }
+        }
 
         return redirect()
             ->route('chat.show', $room)
