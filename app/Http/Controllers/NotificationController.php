@@ -56,6 +56,19 @@ class NotificationController extends Controller
         return redirect()->to($url);
     }
 
+    public function show(Request $request, string $notification): View
+    {
+        $databaseNotification = $request->user()
+            ->notifications()
+            ->findOrFail($notification);
+
+        $databaseNotification->markAsRead();
+
+        return view('notifications.show', [
+            'notification' => $databaseNotification,
+        ]);
+    }
+
     public function markAllAsRead(Request $request): RedirectResponse
     {
         $request->user()
