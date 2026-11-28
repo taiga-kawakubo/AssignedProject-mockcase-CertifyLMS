@@ -101,6 +101,12 @@ final class OnboardAction
                 );
             }
 
+            // 招待のステータスを承認後に変更し、日時を保存
+            $invitation->update([
+                'status' => InvitationStatus::Accepted->value,
+                'accepted_at' => $now,
+            ]);
+
             return $user->refresh();
         });
 
