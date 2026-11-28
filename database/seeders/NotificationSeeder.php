@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\MeetingStatus;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Models\ChatMessage;
+use App\Models\Meeting;
 use App\Models\QaThread;
 use App\Models\User;
 use App\Notifications\Auth\ChatMessageReceivedNotification;
+use App\Notifications\Auth\MeetingCanceledNotification;
+use App\Notifications\Auth\MeetingReservedNotification;
 use App\Notifications\Auth\QaReplyReceivedNotification;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -48,6 +52,9 @@ final class NotificationSeeder extends Seeder
 
             return;
         }
+
+        // 面談通知はMentoringSeederで作成した予約・キャンセル済み面談を使う。
+        $this->seedMeetingNotifications($fixedStudent, $fixedCoach);
 
         $thread = QaThread::query()
             ->where('user_id', $fixedStudent->id)
@@ -131,6 +138,55 @@ final class NotificationSeeder extends Seeder
                     : null,
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
+            ]);
+        }
+    }
+
+    private function seedMeetingNotifications(User $fixedStudent, User $fixedCoach): void
+    {
+        // 受講生が予約した面談は、担当コーチへ未読の予約通知を作る。
+        $reservedMeeting = Meeting::query()
+            ->where('student_id', $fixedStudent->id)
+            ->where('coach_id', $fixedCoach->id)
+            ->where('status', MeetingStatus::Reserved->value)
+            ->oldest()
+            ->first();
+
+        if ($reservedMeeting !== null) {
+            $notification = new MeetingReservedNotification($reservedMeeting);
+
+            $fixedCoach->notifications()->create([
+                'id' => (string) Str::uuid(),
+                'type' => $notification::class,
+                'data' => $notification->toArray($fixedCoach),
+                'read_at' => null,
+                'created_at' => $reservedMeeting->created_at,
+                'updated_at' => $reservedMeeting->created_at,
+            ]);
+        }
+
+        // コーチがキャンセルした面談は、受講生へ既読のキャンセル通知を作る。
+        $canceledMeeting = Meeting::query()
+            ->where('student_id', $fixedStudent->id)
+            ->where('coach_id', $fixedCoach->id)
+            ->where('status', MeetingStatus::Canceled->value)
+            ->where('canceled_by_user_id', $fixedCoach->id)
+            ->whereNotNull('canceled_at')
+            ->oldest('canceled_at')
+            ->first();
+
+        if ($canceledMeeting !== null) {
+            $notification = new MeetingCanceledNotification($canceledMeeting);
+            $createdAt = $canceledMeeting->canceled_at;
+            $readAt = $createdAt->copy()->addMinute();
+
+            $fixedStudent->notifications()->create([
+                'id' => (string) Str::uuid(),
+                'type' => $notification::class,
+                'data' => $notification->toArray($fixedStudent),
+                'read_at' => $readAt,
+                'created_at' => $createdAt,
+                'updated_at' => $readAt,
             ]);
         }
     }
