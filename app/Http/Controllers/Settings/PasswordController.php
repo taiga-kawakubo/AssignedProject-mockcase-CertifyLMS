@@ -1,12 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Settings;
 
 use App\Actions\Fortify\UpdateUserPassword;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-
 
 class PasswordController extends Controller
 {
@@ -22,7 +23,7 @@ class PasswordController extends Controller
         );
 
         return redirect()
-            ->route('settings.profile.index',[
+            ->route('settings.profile.index', [
                 'tab' => 'password',
             ])
             ->with('success', 'パスワードを変更しました。');

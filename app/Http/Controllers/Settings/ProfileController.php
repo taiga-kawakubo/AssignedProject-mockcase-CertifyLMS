@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Settings;
 
 use App\Enums\UserRole;
@@ -9,7 +11,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-
 class ProfileController extends Controller
 {
     public function index(Request $request): View
@@ -18,7 +19,6 @@ class ProfileController extends Controller
 
         return view('settings.profile', ['user' => $user]);
     }
-
 
     public function update(UpdateRequest $request): RedirectResponse
     {
@@ -40,5 +40,4 @@ class ProfileController extends Controller
             ->route('settings.profile.index')
             ->with('success', 'プロフィールを更新しました。');
     }
-
 }
